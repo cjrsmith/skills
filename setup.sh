@@ -28,16 +28,21 @@ INSTRUCTION_TARGETS=(
   "OpenCode:$CONFIG_DIR/opencode/AGENTS.md"
 )
 
-# Skills are read by Claude Code from one directory, one symlink per skill.
-SKILLS_DEST="$CLAUDE_DIR/skills"
+# Tools that read a directory of skills, one symlink per skill. Both use the
+# same layout: a directory with a SKILL.md. Add a line to onboard a new tool.
+SKILL_TARGETS=(
+  "Claude Code:$CLAUDE_DIR/skills"
+  "Codex:$CODEX_DIR/skills"
+)
 
 # Skills shipped by the OS rather than this repo; linked only if present.
 SYSTEM_SKILLS="/usr/share/omarchy/default/agents/skills"
 
 MODE=install
+DRY=0
 for arg in "$@"; do
   case "$arg" in
-    --dry-run)   MODE=dry ;;
+    --dry-run)   DRY=1 ;;
     --status)    MODE=status ;;
     --uninstall) MODE=uninstall ;;
     -h|--help)   sed -n '3,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -79,7 +84,7 @@ link() {
     action="replace ${DIM}(real file backed up)${RESET}"
   fi
 
-  if [ "$MODE" = dry ]; then
+  if [ "$DRY" = 1 ]; then
     note "would  " "$YELLOW" "$label  $action"
     linked=$((linked + 1))
     return
@@ -102,7 +107,7 @@ link() {
 unlink_ours() {
   local dest="$1" label="$2"
   if [ -L "$dest" ] && case "$(readlink -- "$dest")" in "$REPO"/*) true ;; *) false ;; esac; then
-    if [ "$MODE" = dry ]; then
+    if [ "$DRY" = 1 ]; then
       note "would  " "$YELLOW" "remove $label"
     else
       rm -- "$dest"
@@ -133,19 +138,22 @@ if [ "$MODE" = status ]; then
   for entry in "${INSTRUCTION_TARGETS[@]}"; do
     status_of "${entry#*:}" "${entry%%:*}"
   done
-  printf '\n%sSkills%s  (%s)\n' "$BOLD" "$RESET" "$SKILLS_DEST"
-  ours=0; foreign=0
-  for path in "$SKILLS_DEST"/*; do
-    [ -e "$path" ] || [ -L "$path" ] || continue
-    if [ -L "$path" ] && case "$(readlink -- "$path")" in "$REPO"/*) true ;; *) false ;; esac; then
-      ours=$((ours + 1))
-    else
-      foreign=$((foreign + 1))
-      status_of "$path" "$(basename -- "$path")"
-    fi
+  for entry in "${SKILL_TARGETS[@]}"; do
+    dest="${entry#*:}"
+    printf '\n%sSkills%s  %s  (%s)\n' "$BOLD" "$RESET" "${entry%%:*}" "$dest"
+    ours=0; foreign=0
+    for path in "$dest"/*; do
+      [ -e "$path" ] || [ -L "$path" ] || continue
+      if [ -L "$path" ] && case "$(readlink -- "$path")" in "$REPO"/*) true ;; *) false ;; esac; then
+        ours=$((ours + 1))
+      else
+        foreign=$((foreign + 1))
+        status_of "$path" "$(basename -- "$path")"
+      fi
+    done
+    printf '  %s%s linked from this repo%s\n' "$DIM" "$ours" "$RESET"
+    [ "$foreign" -gt 0 ] && printf '  %s%s not from this repo (listed above)%s\n' "$DIM" "$foreign" "$RESET"
   done
-  printf '  %s%s linked from this repo%s\n' "$DIM" "$ours" "$RESET"
-  [ "$foreign" -gt 0 ] && printf '  %s%s not from this repo (listed above)%s\n' "$DIM" "$foreign" "$RESET"
   echo
   exit 0
 fi
@@ -155,12 +163,18 @@ if [ "$MODE" = uninstall ]; then
   for entry in "${INSTRUCTION_TARGETS[@]}"; do
     unlink_ours "${entry#*:}" "${entry%%:*}"
   done
-  printf '\n%sSkills%s\n' "$BOLD" "$RESET"
-  for path in "$SKILLS_DEST"/*; do
-    [ -L "$path" ] || continue
-    unlink_ours "$path" "$(basename -- "$path")"
+  for entry in "${SKILL_TARGETS[@]}"; do
+    printf '\n%sSkills%s  %s\n' "$BOLD" "$RESET" "${entry%%:*}"
+    for path in "${entry#*:}"/*; do
+      [ -L "$path" ] || continue
+      unlink_ours "$path" "$(basename -- "$path")"
+    done
   done
-  printf '\n%s removed. Backups in %s were left alone.\n\n' "$removed" "$REPO/backups"
+  if [ "$DRY" = 1 ]; then
+    printf '\n%s%s would be removed. Dry run: nothing was changed.%s\n\n' "$YELLOW" "$removed" "$RESET"
+  else
+    printf '\n%s removed. Backups in %s were left alone.\n\n' "$removed" "$REPO/backups"
+  fi
   exit 0
 fi
 
@@ -169,19 +183,32 @@ for entry in "${INSTRUCTION_TARGETS[@]}"; do
   link "$MASTER" "${entry#*:}" "${entry%%:*}"
 done
 
-printf '\n%sSkills%s  (-> %s)\n' "$BOLD" "$RESET" "$SKILLS_DEST"
-mkdir -p "$SKILLS_DEST"
+printf '\n%sSkills%s\n' "$BOLD" "$RESET"
+for entry in "${SKILL_TARGETS[@]}"; do
+  [ "$DRY" = 1 ] || mkdir -p "${entry#*:}"
+done
+
 for path in "$SKILLS"/*; do
   [ -d "$path" ] || continue
-  [ -f "$path/SKILL.md" ] || { note "skip   " "$DIM" "$(basename -- "$path") ${DIM}(no SKILL.md)"; skipped=$((skipped + 1)); continue; }
-  link "$path" "$SKILLS_DEST/$(basename -- "$path")" "$(basename -- "$path")"
+  name="$(basename -- "$path")"
+  if [ ! -f "$path/SKILL.md" ]; then
+    note "skip   " "$DIM" "$name ${DIM}(no SKILL.md)"
+    skipped=$((skipped + 1))
+    continue
+  fi
+  for entry in "${SKILL_TARGETS[@]}"; do
+    link "$path" "${entry#*:}/$name" "$name ${DIM}-> ${entry%%:*}${RESET}"
+  done
 done
 
 if [ -d "$SYSTEM_SKILLS" ]; then
   printf '\n%sSystem skills%s  (%s)\n' "$BOLD" "$RESET" "$SYSTEM_SKILLS"
   for path in "$SYSTEM_SKILLS"/*; do
     [ -d "$path" ] || continue
-    link "$path" "$SKILLS_DEST/$(basename -- "$path")" "$(basename -- "$path")"
+    name="$(basename -- "$path")"
+    for entry in "${SKILL_TARGETS[@]}"; do
+      link "$path" "${entry#*:}/$name" "$name ${DIM}-> ${entry%%:*}${RESET}"
+    done
   done
 fi
 
@@ -190,5 +217,5 @@ printf '\n%s%d linked, %d already correct' "$BOLD" "$linked" "$already"
 [ "$skipped" -gt 0 ] && printf ', %d skipped' "$skipped"
 printf '%s\n' "$RESET"
 [ "$backed_up" -gt 0 ] && printf '%sBackups: %s%s\n' "$DIM" "$BACKUP_DIR" "$RESET"
-[ "$MODE" = dry ] && printf '%sDry run. Nothing was changed.%s\n' "$YELLOW" "$RESET"
+[ "$DRY" = 1 ] && printf '%sDry run. Nothing was changed.%s\n' "$YELLOW" "$RESET"
 printf '%sStart a fresh session in each tool to pick up changes.%s\n\n' "$DIM" "$RESET"

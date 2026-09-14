@@ -50,10 +50,21 @@ backups/     local recovery state (gitignored)
 
 `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and `XDG_CONFIG_HOME` are honoured if set.
 
-Each `skills/<name>/` is linked individually into `~/.claude/skills/<name>`, so
-skills installed by other means sit alongside these untouched. If this machine
-has Omarchy, its system skills are linked in from
+Skills go to both tools that read them, one symlink per skill:
+
+| Tool        | Native path         |
+| ----------- | ------------------- |
+| Claude Code | `~/.claude/skills/` |
+| Codex       | `~/.codex/skills/`  |
+
+Both read the same layout, so a skill needs no per-tool variant — a directory
+with a `SKILL.md`, plus `agents/openai.yaml` for the name Codex displays.
+Linking is per skill, so skills installed by other means sit alongside these
+untouched. If this machine has Omarchy, its system skills are linked in from
 `/usr/share/omarchy/default/agents/skills` too.
+
+OpenCode gets `AGENTS.md` and nothing else: it has no skills directory. Its
+`agent` command manages subagent personas, which is a different thing.
 
 Because instructions are one shared file, every tool sees byte-identical text.
 There is no place for tool-specific rules; a tool that needs its own has to move
@@ -79,6 +90,12 @@ Add one line to `INSTRUCTION_TARGETS` in `setup.sh`:
 
 ```bash
 "Tool name:$CONFIG_DIR/tool/AGENTS.md"
+```
+
+If it also reads a directory of skills, add a line to `SKILL_TARGETS`:
+
+```bash
+"Tool name:$CONFIG_DIR/tool/skills"
 ```
 
 ## Credits
