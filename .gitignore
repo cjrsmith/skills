@@ -1,0 +1,14 @@
+# Local recovery state: previous contents of native files this repo overwrites.
+# Machine-specific and sometimes contains personal instruction text.
+backups/
+
+# Symlinks into this machine's Omarchy install (/usr/share/omarchy/...).
+# setup.sh re-creates these on any machine that has Omarchy.
+skills/omarchy
+skills/diagnose-crash
+
+# Retired: the copy-based sync this repo replaced with symlinks.
+# Kept on disk for reading old backup manifests, not worth publishing.
+sync-instructions.py
+
+.DS_Store

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Walkthrough"
+  short_description: "Interactive HTML walkthrough of a codebase"
+policy:
+  allow_implicit_invocation: false
