@@ -31,13 +31,14 @@ every card raises the question of how many are left.
 
 ## Ordering is the whole design
 
-Order the cards so that **each one uses only ideas the reader has already met**.
-Every term on card four was either defined on cards one to three or is ordinary
-English. This is checkable: walk the cards in order and confirm that nothing in
-each is still unexplained.
+The cold-read rule binds every mode. Here it *is* the mode: the reader cannot
+skip ahead or double back, so the order carries the whole reframe. A card that
+lands before the idea it needs is a dead end, not a detour.
 
-When a card needs two things the reader does not have yet, it is really two
-cards. Split it.
+Which makes it checkable in a way the other modes are not. Walk the cards in
+order and confirm that every term in each one was ordinary English or was
+defined on a card before it. Where it was not, the missing idea is its own
+earlier card.
 
 Four to nine content cards. Fewer than four rarely needs pacing; more than nine
 and the sequence itself becomes the thing that is hard to hold.

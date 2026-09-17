@@ -1,5 +1,5 @@
 interface:
   display_name: "Unpack"
-  short_description: "Rebuild a dense answer as a self-paced HTML page"
+  short_description: "Rebuild a dense answer, cold, as a self-paced HTML page"
 policy:
   allow_implicit_invocation: false
