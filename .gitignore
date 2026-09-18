@@ -11,4 +11,6 @@ skills/diagnose-crash
 # Kept on disk for reading old backup manifests, not worth publishing.
 sync-instructions.py
 
+.tandem/
+
 .DS_Store
