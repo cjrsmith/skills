@@ -28,3 +28,15 @@ Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
 - **Frontier**: scan `.scratch/<effort>/issues/` for files that are open, unblocked, and unclaimed; first by number wins.
 - **Claim**: set `Status: claimed` and save before any work.
 - **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
+
+## Horizon operations
+
+Used by `/horizon`. The **board** is a file with one **card** file per idea.
+
+- **Board**: `.scratch/horizons/<product-slug>/board.md` (the Frame / Backbone / Releases / Status body).
+- **Card**: `.scratch/horizons/<product-slug>/cards/NN-<slug>.md`, numbered from `01`. The first line is the title in the user's words; then `Activity:`, `Release:`, `Level:` lines (blank when unset; blank `Activity:` is **unplaced**) and a `Status:` line of `open` / `built`; then any context and `Detail of: <task>` for a detail.
+- **Set a coordinate**: edit the line.
+- **Low-res view**: `head -5` every card file; never read whole bodies.
+- **Built**: set `Status: built`.
+- **Destination block**: `.scratch/horizons/<product-slug>/R<n>-destination.md`, linked from the Releases table.
+- **View**: `grep -l "Activity: <slug>" cards/*.md` is a column; `grep -l "Release: R1"` is a row.

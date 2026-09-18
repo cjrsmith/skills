@@ -44,3 +44,16 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 - **Frontier query**: `glab issue list -F json` scoped to the map's children, drop any with an open blocker: a native `blocked_by` link to an open issue (`glab api projects/:id/issues/:iid/links`), or an open issue in the `Blocked by` line, or an assignee; first in map order wins.
 - **Claim**: `glab issue update <n> --assignee @me`, the session's first write.
 - **Resolve**: `glab issue note <n> --message "<answer>"`, then `glab issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
+
+## Horizon operations
+
+Used by `/horizon`. The **board** is a single issue; **cards** are child issues.
+
+- **Board**: an issue labelled `horizon:board`, title = the product, holding the Frame / Backbone / Releases / Status body. `glab issue create --label horizon:board`.
+- **Card**: an issue carrying `Part of #<board>` at the top of its description and the label `horizon:card`. Title is the idea in the user's words; description holds context and `Detail of: <task>` for a detail.
+- **Coordinates** are GitLab **scoped labels**, which enforce one value per scope: `activity::<slug>`, `release::R1` (`release::Later` for below the line), `level::task` / `level::detail`. Create them once per project with `glab label create`. Backbone order lives in the board body, since labels carry no order. **Unplaced** is a card with no `activity::` label.
+- **Set a coordinate**: `glab issue update <n> --label "release::R2"`; the scope replaces the old value.
+- **Low-res view**: `glab issue list --label horizon:card -F json`, then `jq` each to iid, title, state and labels; never fetch descriptions. Scope with `--label "activity::<slug>"` to cut one column at a time.
+- **Built**: `glab issue close <n>`.
+- **Destination block**: `glab issue note <board> --message "<block>"`, linked from the Releases table.
+- **View**: the issue board with lists per `activity::` label is the story map; filter by `release::` to see one row.

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Horizon"
+  short_description: "Story-map a product and cut its next release"
+policy:
+  allow_implicit_invocation: false

@@ -43,3 +43,16 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 - **Frontier query**: list the map's open children (`gh issue list --state open`, scoped to the map's sub-issues / task list), drop any with an open blocker (`issue_dependencies_summary.blocked_by > 0`, or an open issue in the `Blocked by` line) or an assignee; first in map order wins.
 - **Claim**: `gh issue edit <n> --add-assignee @me`, the session's first write.
 - **Resolve**: `gh issue comment <n> --body "<answer>"`, then `gh issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
+
+## Horizon operations
+
+Used by `/horizon`. The **board** is a GitHub Project; **cards** are real issues added to it. Needs the `project` token scope: `gh auth refresh -s project` once per machine. `<owner>` is the user or org that owns the project (`@me` for the current user); it may differ from the repo's owner.
+
+- **Board**: `gh project create --owner <owner> --title "<product>"`. The board body lives in the project README: write it with `gh project edit <n> --owner <owner> --readme "$(cat body.md)"`, read it with `gh project view <n> --owner <owner> --format json --jq .readme`. Find boards by title with `gh project list --owner <owner> --format json`. Record the owner and number in the board body's Status line so any repo can find it.
+- **Coordinates** are single-select fields: `gh project field-create <n> --owner <owner> --name Activity --data-type SINGLE_SELECT --single-select-options "<activity>,<activity>,…"` with the options **in backbone order**, likewise `Release` (`R1,R2,R3,Later`) and `Level` (`task,detail`). The CLI cannot append or reorder options on an existing field; do that with the GraphQL `updateProjectV2Field` mutation, passing the full option list in the new order (`gh project field-list <n> --owner <owner> --format json` gives the field id). Redrawing the backbone is that mutation on `Activity`.
+- **Card**: a real issue, never a draft item (drafts cannot be linked from a Wayfinder map or closed by a PR). Create it in the repo the user is in unless they name another: `gh issue create --title "<idea, user's words>" --body "<context; Detail of: <task> if a detail>" --label horizon:card`, then attach with `gh project item-add <n> --owner <owner> --url <issue-url>`. Cards may come from any repo the owner can reach.
+- **Set a coordinate**: `gh project item-edit <n> --owner <owner> --url <issue-url> --field Activity --value "<option>"`; one field per call. **Unplaced** is an empty `Activity`.
+- **Low-res view**: `gh project item-list <n> --owner <owner> -L 500 --format json`, then `jq` each item to title, state and its `Activity`/`Release`/`Level` values; never fetch bodies. Filter with `--query`, e.g. `--query "release:R1"` or `--query "no:activity"`.
+- **Built**: `gh issue close <url>`. A closed card stays on the board with its coordinates.
+- **Destination block**: post as a comment on the first card of the release, or as the README's final section if the user prefers; link it from the Releases table.
+- **View**: the CLI cannot create views. Once, in the browser, add a **Board** view grouped by `Activity` with `Release` as swimlanes; column order follows the option order. A human dragging a card between swimlanes is a cut the next session reads back.
