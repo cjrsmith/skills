@@ -31,7 +31,7 @@ A **release** is a horizontal line across the map. Above the line is in; below i
 
 ## The board
 
-One board per product, on the issue tracker. **Where the board, its cards, coordinates and views physically live is tracker-specific.** Consult the tracker doc's "Horizon operations" section for how _this_ repo expresses them; if no tracker doc has been provided, tell the user to run `/setup-matt-pocock-skills`, or default to the local-markdown tracker.
+One board per product, on the issue tracker. **Where the board, its cards, coordinates and views physically live is tracker-specific.** Consult the tracker doc's "Horizon operations" section for how _this_ repo expresses them; if no tracker doc has been provided, tell the user to run `/setup-skills`, or default to the local-markdown tracker.
 
 ### The board body
 
