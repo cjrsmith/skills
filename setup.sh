@@ -206,6 +206,11 @@ if [ -d "$SYSTEM_SKILLS" ]; then
   for path in "$SYSTEM_SKILLS"/*; do
     [ -d "$path" ] || continue
     name="$(basename -- "$path")"
+    if [ -f "$SKILLS/$name/SKILL.md" ]; then
+      note "skip   " "$DIM" "$name ${DIM}(this repo has its own)"
+      skipped=$((skipped + 1))
+      continue
+    fi
     for entry in "${SKILL_TARGETS[@]}"; do
       link "$path" "${entry#*:}/$name" "$name ${DIM}-> ${entry%%:*}${RESET}"
     done
